@@ -1,8 +1,36 @@
+import { buildResearchMemo } from '../src/lib/orchestrator.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const { mode } = req.body || {};
+
+  // ------------------------------------------------------------------
+  // Memo mode: orchestrate fetchers + Claude → structured research memo
+  // ------------------------------------------------------------------
+  if (mode === 'memo') {
+    const { ticker } = req.body;
+
+    if (!ticker || typeof ticker !== 'string') {
+      return res
+        .status(400)
+        .json({ error: 'Missing or invalid "ticker" in request body' });
+    }
+
+    try {
+      const result = await buildResearchMemo(ticker);
+      return res.status(200).json(result);
+    } catch (err) {
+      console.error('Memo generation error:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Raw mode (default): proxy systemPrompt + userMessage to Claude
+  // ------------------------------------------------------------------
   const { systemPrompt, userMessage } = req.body || {};
 
   if (!systemPrompt || typeof systemPrompt !== 'string') {

@@ -36,3 +36,6 @@ dist-ssr
 
 .vercel
 .env*.local
+
+# Claude Code session data
+.claude/
